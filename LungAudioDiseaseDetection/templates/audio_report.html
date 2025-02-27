@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Analysis Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .header-logo {
+            max-height: 60px;
+        }
+        .report-header {
+            border-bottom: 2px solid #333;
+            margin-bottom: 2rem;
+        }
+        .diagnosis-box {
+            border: 2px solid #ddd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .severity-indicator {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        .chart-container {
+            height: 300px;
+            margin: 2rem 0;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Report Header -->
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Hospital Logo" class="header-logo">
+                </div>
+                <div class="col-md-6 text-center">
+                    <h2>Respiratory Sound Analysis Report</h2>
+                    <p class="mb-0">Generated on: {{ current_date }}</p>
+                </div>
+                <div class="col-md-3 text-end">
+                    <p class="mb-0">Report ID: {{ report_id }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Patient Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> {{ patient_info.name }}</p>
+                        <p><strong>Patient ID:</strong> {{ patient_info.id }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Age:</strong> {{ patient_info.age }}</p>
+                        <p><strong>Gender:</strong> {{ patient_info.gender }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Analysis Results</h4>
+            </div>
+            <div class="card-body">
+                <div class="diagnosis-box">
+                    <h5>Primary Diagnosis</h5>
+                    <div class="severity-indicator" style="background-color: {% if prediction.class == 'Healthy' %}#28a745{% else %}#dc3545{% endif %}; color: white;">
+                        {{ prediction.class }}
+                    </div>
+                    <p><strong>Confidence Level:</strong> {{ "%.2f"|format(prediction.confidence) }}%</p>
+                </div>
+
+                <!-- Analysis Chart -->
+                <div class="chart-container">
+                    <canvas id="analysisChart"></canvas>
+                </div>
+
+                <!-- Clinical Findings -->
+                <div class="mt-4">
+                    <h5>Clinical Findings</h5>
+                    <ul>
+                        {% if prediction.class == 'COPD' %}
+                            <li>Presence of wheezing and prolonged expiration</li>
+                            <li>Reduced breath sounds</li>
+                            <li>Possible crackles during inspiration</li>
+                        {% elif prediction.class == 'Bronchiolitis' %}
+                            <li>Fine crackles during inspiration</li>
+                            <li>Wheezing during expiration</li>
+                            <li>Increased respiratory rate</li>
+                        {% elif prediction.class == 'Pneumonia' %}
+                            <li>Coarse crackles during inspiration</li>
+                            <li>Bronchial breathing</li>
+                            <li>Possible pleural rub</li>
+                        {% elif prediction.class == 'URTI' %}
+                            <li>Upper airway sounds</li>
+                            <li>Possible stridor</li>
+                            <li>Normal breath sounds in lower airways</li>
+                        {% else %}
+                            <li>Normal vesicular breath sounds</li>
+                            <li>No adventitious sounds</li>
+                            <li>Regular respiratory rate and pattern</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Recommendations</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Treatment Recommendations</h5>
+                        <ul>
+                            {% if prediction.class == 'COPD' %}
+                                <li>Bronchodilator therapy</li>
+                                <li>Pulmonary rehabilitation program</li>
+                                <li>Smoking cessation if applicable</li>
+                            {% elif prediction.class == 'Bronchiolitis' %}
+                                <li>Supportive care</li>
+                                <li>Hydration maintenance</li>
+                                <li>Monitoring of respiratory status</li>
+                            {% elif prediction.class == 'Pneumonia' %}
+                                <li>Appropriate antibiotic therapy</li>
+                                <li>Chest physiotherapy</li>
+                                <li>Regular monitoring of vital signs</li>
+                            {% elif prediction.class == 'URTI' %}
+                                <li>Symptomatic treatment</li>
+                                <li>Rest and hydration</li>
+                                <li>Monitor for complications</li>
+                            {% else %}
+                                <li>Regular health maintenance</li>
+                                <li>Preventive care</li>
+                                <li>Annual check-ups</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Follow-up Care</h5>
+                        <ul>
+                            {% if prediction.class != 'Healthy' %}
+                                <li>Schedule follow-up in 1-2 weeks</li>
+                                <li>Monitor symptoms daily</li>
+                                <li>Return if symptoms worsen</li>
+                            {% else %}
+                                <li>Regular annual check-up</li>
+                                <li>Maintain healthy lifestyle</li>
+                                <li>Preventive care as scheduled</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-4 mb-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <p><small>This report was generated using AI-assisted analysis. Results should be interpreted by a qualified healthcare professional.</small></p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p><strong>Analyzing Physician:</strong> ____________________</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Print Button -->
+        <div class="text-center mb-5 no-print">
+            <button onclick="window.print()" class="btn btn-primary">Print Report</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize the analysis chart
+        const ctx = document.getElementById('analysisChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['COPD', 'Bronchiolitis', 'Pneumonia', 'URTI', 'Healthy'],
+                datasets: [{
+                    label: 'Confidence Score (%)',
+                    data: [
+                        {% if prediction.class == 'COPD' %}{{ prediction.confidence }}{% else %}{{ (1 - prediction.confidence) * 0.25 }}{% endif %},
+                        {% if prediction.class == 'Bronchiolitis' %}{{ prediction.confidence }}{% else %}{{ (1 - prediction.confidence) * 0.25 }}{% endif %},
+                        {% if prediction.class == 'Pneumonia' %}{{ prediction.confidence }}{% else %}{{ (1 - prediction.confidence) * 0.25 }}{% endif %},
+                        {% if prediction.class == 'URTI' %}{{ prediction.confidence }}{% else %}{{ (1 - prediction.confidence) * 0.25 }}{% endif %},
+                        {% if prediction.class == 'Healthy' %}{{ prediction.confidence }}{% else %}{{ (1 - prediction.confidence) * 0.25 }}{% endif %}
+                    ],
+                    backgroundColor: [
+                        'rgba(220, 53, 69, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(23, 162, 184, 0.7)',
+                        'rgba(255, 136, 0, 0.7)',
+                        'rgba(40, 167, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)',
+                        'rgba(255, 136, 0, 1)',
+                        'rgba(40, 167, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

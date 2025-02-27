@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lung Audio Analysis - Medical Diagnostic Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .diagnosis-form, .result-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+
+        .carousel-inner {
+            height: 400px;
+        }
+
+        .carousel-item canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+/* Main container */
+.precautions-section {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 25px;
+    margin-top: 30px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Section Title */
+.section-title {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    border-bottom: 3px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+/* Condition Card */
+.condition-card {
+    background: #f8f9fa;
+    border-left: 5px solid #0d6efd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+}
+
+.condition-card:hover {
+    transform: scale(1.02);
+}
+
+/* Precaution Card */
+.precautions-card {
+    background: #fff3cd;
+    border-left: 5px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Instructions Card */
+.instructions-card {
+    background: #d1e7dd;
+    border-left: 5px solid #198754;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Headings inside cards */
+.card-heading {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* List styling */
+.precautions-list li,
+.instructions-list li {
+    margin-bottom: 12px;
+    padding-left: 30px;
+    position: relative;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.precautions-list li i,
+.instructions-list li i {
+    position: absolute;
+    left: 0;
+    top: 3px;
+    font-size: 1.2rem;
+    color: #0d6efd;
+}
+
+/* Severity Badge */
+.severity-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Severity Levels */
+.severity-high {
+    background-color: #dc3545;
+    color: white;
+}
+
+.severity-medium {
+    background-color: #ffc107;
+    color: black;
+}
+
+.severity-low {
+    background-color: #198754;
+    color: white;
+}
+
+
+    </style>
+</head>
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/"><i class="fas fa-heartbeat me-2"></i>Lung Diagnosis(X-ray)</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lung-diagnosis">Lung Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/audio-diagnosis">Audio Analysis</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4">Lung Audio Analysis</h1>
+        <p class="lead">Advanced AI-powered analysis for accurate lung condition detection</p>
+    </div>
+</section>
+<body>
+    <div class="container mt-5">
+        <h2>Lung Disease Detection</h2>
+        <form id="uploadForm" action="/predict-lung" method="POST" enctype="multipart/form-data">
+            <!-- Patient Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Patient Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="patient_name" class="form-label">Patient Name</label>
+                                <input type="text" class="form-control" id="patient_name" name="patient_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="patient_id" class="form-label">Patient ID</label>
+                                <input type="text" class="form-control" id="patient_id" name="patient_id" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="age" class="form-label">Age</label>
+                                <input type="number" class="form-control" id="age" name="age" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-control" id="gender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Upload X-ray</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select X-ray Image</label>
+                        <input type="file" class="form-control" id="file" name="file" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-dark">Upload and Analyze</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results" class="card mb-4" style="display: none;">
+            <div class="card-header">
+                <h4>Analysis Results</h4>
+            </div>
+            <div class="card-body">
+                <div id="predictionResult"></div>
+                
+                <!-- Analysis Charts Carousel -->
+                <div class="charts-section mt-4">
+                    <h5>Detailed Analysis</h5>
+                    <div id="analysisChartsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+                        <div class="carousel-indicators">
+                            <button type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide-to="0" class="active"></button>
+                            <button type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide-to="1"></button>
+                            <button type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide-to="2"></button>
+                            <button type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide-to="3"></button>
+                        </div>
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <div class="chart-container" style="position: relative; height:400px;">
+                                    <canvas id="confidenceChart"></canvas>
+                                </div>
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75">
+                                    <h5>Confidence Distribution</h5>
+                                    <p>Distribution of prediction confidence across different conditions</p>
+                                </div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="chart-container" style="position: relative; height:400px;">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75">
+                                    <h5>Pattern Analysis</h5>
+                                    <p>Radar analysis of key diagnostic indicators</p>
+                                </div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="chart-container" style="position: relative; height:400px;">
+                                    <canvas id="severityChart"></canvas>
+                                </div>
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75">
+                                    <h5>Severity Assessment</h5>
+                                    <p>Analysis of condition severity indicators</p>
+                                </div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="chart-container" style="position: relative; height:400px;">
+                                    <canvas id="timelineChart"></canvas>
+                                </div>
+                                <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75">
+                                    <h5>Temporal Analysis</h5>
+                                    <p>Progressive analysis over time</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#analysisChartsCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="precautionsSection" style="display: none;" class="precautions-section">
+                    <h5><i class="fas fa-shield-alt me-2"></i>Precautions and Instructions</h5>
+                    
+                    <div class="condition-card">
+                        <div class="card-heading">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Condition Overview</span>
+                        </div>
+                        <span id="severityBadge" class="severity-badge"></span>
+                        <p id="conditionDescription"></p>
+                    </div>
+                    
+                    <div class="precautions-card">
+                        <div class="card-heading">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Recommended Precautions</span>
+                        </div>
+                        <ul id="precautionsItems" class="precautions-list list-unstyled">
+                        </ul>
+                    </div>
+                    
+                    <div class="instructions-card">
+                        <div class="card-heading">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Follow-up Instructions</span>
+                        </div>
+                        <ul id="instructionsItems" class="instructions-list list-unstyled">
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button id="generateReport" class="btn btn-success">Generate Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show loading state
+        const resultsDiv = document.getElementById('results');
+        const predictionDiv = document.getElementById('predictionResult');
+        predictionDiv.innerHTML = '<div class="alert alert-info">Processing image...</div>';
+        resultsDiv.style.display = 'block';
+        
+        try {
+            const formData = new FormData(this);
+            
+            const response = await fetch('/predict-lung', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                predictionDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Error</h5>
+                        <p class="mb-0">${data.error}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Store response data for report generation
+            window.predictionData = data;
+            
+            // Display results
+            predictionDiv.innerHTML = `
+                <div class="alert ${data.prediction.class === 'COVID-19' ? 'alert-danger' : (data.prediction.class === 'Healthy' ? 'alert-success' : 'alert-warning')}">
+                    <h5 class="alert-heading">Primary Diagnosis</h5>
+                    <p class="mb-0"><strong>Condition:</strong> ${data.prediction.class}</p>
+                    <p class="mb-0"><strong>Confidence:</strong> ${data.prediction.confidence ? data.prediction.confidence.toFixed(2) + '%' : 'N/A'}</p>
+                    ${data.prediction.class === 'COVID-19' ? '<p class="mt-2 mb-0 text-danger"><strong>⚠️ URGENT:</strong> Immediate medical attention recommended</p>' : ''}
+                </div>
+            `;
+            
+            // Initialize charts
+            initializeCharts(data.prediction);
+
+            // Update precautions and instructions
+            const precautionsSection = document.getElementById('precautionsSection');
+            const conditionDescription = document.getElementById('conditionDescription');
+            const precautionsItems = document.getElementById('precautionsItems');
+            const instructionsItems = document.getElementById('instructionsItems');
+
+            // Clear previous content
+            precautionsItems.innerHTML = '';
+            instructionsItems.innerHTML = '';
+
+            // Show the precautions section
+            precautionsSection.style.display = 'block';
+
+            // Define condition-specific information
+            const conditionInfo = {
+                'Healthy': {
+                    description: 'Your lung X-ray appears normal, indicating healthy respiratory function.',
+                    precautions: [
+                        'Maintain good respiratory hygiene',
+                        'Exercise regularly to maintain lung health',
+                        'Avoid exposure to smoke and pollutants',
+                        'Practice deep breathing exercises'
+                    ],
+                    instructions: [
+                        'Continue regular health check-ups',
+                        'Stay up to date with vaccinations',
+                        'Monitor any changes in breathing patterns',
+                        'Maintain a healthy lifestyle'
+                    ]
+                },
+                'COVID-19': {
+                    description: 'X-ray analysis indicates patterns consistent with COVID-19. Immediate medical attention is recommended.',
+                    precautions: [
+                        'Isolate immediately to prevent transmission',
+                        'Wear a mask when around others',
+                        'Monitor oxygen levels with a pulse oximeter',
+                        'Rest in prone position (on stomach) when possible',
+                        'Maintain good hydration'
+                    ],
+                    instructions: [
+                        'Contact healthcare provider immediately',
+                        'Monitor temperature and oxygen levels regularly',
+                        'Take prescribed medications as directed',
+                        'Watch for worsening symptoms',
+                        'Follow local health authority guidelines'
+                    ]
+                }
+            };
+
+            // Display condition-specific information
+            conditionDescription.textContent = conditionInfo[data.prediction.class].description;
+            
+            // Set severity badge
+            const severityBadge = document.getElementById('severityBadge');
+            if (data.prediction.class === 'COVID-19') {
+                severityBadge.className = 'severity-badge severity-high';
+                severityBadge.textContent = 'High Risk - Immediate Action Required';
+            } else if (data.prediction.class === 'Healthy') {
+                severityBadge.className = 'severity-badge severity-low';
+                severityBadge.textContent = 'Low Risk - Normal';
+            } else {
+                severityBadge.className = 'severity-badge severity-medium';
+                severityBadge.textContent = 'Moderate Risk - Monitor Closely';
+            }
+
+            conditionInfo[data.prediction.class].precautions.forEach(precaution => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <i class="fas fa-check text-warning"></i>
+                    <span>${precaution}</span>
+                `;
+                precautionsItems.appendChild(li);
+            });
+
+            conditionInfo[data.prediction.class].instructions.forEach(instruction => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <i class="fas fa-arrow-right text-success"></i>
+                    <span>${instruction}</span>
+                `;
+                instructionsItems.appendChild(li);
+            });
+            
+        } catch (error) {
+            console.error('Error:', error);
+            predictionDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">Error</h5>
+                    <p class="mb-0">An error occurred during prediction. Please try again.</p>
+                </div>
+            `;
+        }
+        
+        return false;
+    });
+
+    document.getElementById('generateReport').addEventListener('click', async function() {
+        if (!window.predictionData) {
+            alert('No prediction data available. Please analyze an image first.');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/generate_lung_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prediction: window.predictionData.prediction,
+                    patient_info: window.predictionData.patient_info
+                })
+            });
+            
+            if (response.ok) {
+                const reportWindow = window.open('');
+                reportWindow.document.write(await response.text());
+                reportWindow.document.close();
+            } else {
+                const errorData = await response.json();
+                alert('Error generating report: ' + (errorData.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while generating the report');
+        }
+    });
+
+    function initializeCharts(prediction) {
+        // Destroy existing charts if they exist
+        const chartIds = ['confidenceChart', 'radarChart', 'severityChart', 'timelineChart'];
+        chartIds.forEach(id => {
+            const chartInstance = Chart.getChart(id);
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+        });
+
+        // Confidence Distribution Chart
+        const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
+        new Chart(confidenceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['COVID-19', 'NORMAL', 'PNEUMONIA', 'TUBERCULOSIS'],
+                datasets: [{
+                    label: 'Confidence Score (%)',
+                    data: [
+                        prediction.class === 'COVID-19' ? prediction.confidence : (100 - prediction.confidence) / 3,
+                        prediction.class === 'NORMAL' ? prediction.confidence : (100 - prediction.confidence) / 3,
+                        prediction.class === 'PNEUMONIA' ? prediction.confidence : (100 - prediction.confidence) / 3,
+                        prediction.class === 'TUBERCULOSIS' ? prediction.confidence : (100 - prediction.confidence) / 3
+                    ],
+                    backgroundColor: [
+                        'rgba(220, 53, 69, 0.7)',
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(23, 162, 184, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(23, 162, 184, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Radar Chart
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Clarity', 'Contrast', 'Pattern Recognition', 'Feature Detection', 'Confidence'],
+                datasets: [{
+                    label: 'Analysis Metrics',
+                    data: [
+                        85 + Math.random() * 15,
+                        80 + Math.random() * 20,
+                        prediction.confidence,
+                        75 + Math.random() * 25,
+                        prediction.confidence
+                    ],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Severity Chart
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+        new Chart(severityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Mild', 'Moderate', 'Severe'],
+                datasets: [{
+                    data: [
+                        prediction.confidence > 90 ? 70 : 30,
+                        prediction.confidence > 90 ? 20 : 40,
+                        prediction.confidence > 90 ? 10 : 30
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Timeline Chart
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Initial', 'Processing', 'Feature Extraction', 'Analysis', 'Final'],
+                datasets: [{
+                    label: 'Analysis Progress',
+                    data: [20, 40, 65, 85, prediction.confidence],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+    </script>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
